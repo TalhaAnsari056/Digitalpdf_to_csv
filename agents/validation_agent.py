@@ -1,53 +1,53 @@
-import json
-from dataclasses import fields
+# import json
+# from dataclasses import fields
 
-from config import OUTPUT_DIR
+# from config import OUTPUT_DIR
 
 
-class ValidationAgent:
+# class ValidationAgent:
 
-    @staticmethod
-    def run(document):
+#     @staticmethod
+#     def run(document):
 
-        print("Validating Data...")
+#         print("Validating Data...")
 
-        report = []
+#         report = []
 
-        for index, record in enumerate(document.parsed_data):
+#         for index, record in enumerate(document.parsed_data):
 
-            errors = []
+#             errors = []
 
-            for field in fields(record):
+#             for field in fields(record):
 
-                value = getattr(record, field.name)
+#                 value = getattr(record, field.name)
 
-                if value is None:
+#                 if value is None:
 
-                    errors.append(f"{field.name} is None")
+#                     errors.append(f"{field.name} is None")
 
-                elif isinstance(value, str):
+#                 elif isinstance(value, str):
 
-                    if value.strip() == "":
+#                     if value.strip() == "":
 
-                        errors.append(f"{field.name} is empty")
+#                         errors.append(f"{field.name} is empty")
 
-            report.append(
-                {
-                    "record": index + 1,
-                    "errors": errors,
-                }
-            )
+#             report.append(
+#                 {
+#                     "record": index + 1,
+#                     "errors": errors,
+#                 }
+#             )
 
-        validation_folder = (
-            OUTPUT_DIR / document.filename.replace(".pdf", "") / "validated"
-        )
+#         validation_folder = (
+#             OUTPUT_DIR / document.filename.replace(".pdf", "") / "validated"
+#         )
 
-        validation_folder.mkdir(parents=True, exist_ok=True)
+#         validation_folder.mkdir(parents=True, exist_ok=True)
 
-        validation_file = validation_folder / "validation_report.json"
+#         validation_file = validation_folder / "validation_report.json"
 
-        with open(validation_file, "w", encoding="utf-8") as file:
+#         with open(validation_file, "w", encoding="utf-8") as file:
 
-            json.dump(report, file, indent=4)
+#             json.dump(report, file, indent=4)
 
-        return document
+#         return document

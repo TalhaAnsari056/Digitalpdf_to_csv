@@ -6,16 +6,17 @@ class ClassificationAgent:
     @staticmethod
     def run(document):
 
+        print("\n" + "=" * 70)
+        print("CLASSIFICATION AGENT")
+        print("=" * 70)
+
         document.document_type = ClassifierService.classify(document)
 
-        print()
+        print("\nDetected Document Type")
+        print("----------------------")
+        print(document.document_type)
 
-        print("=" * 60)
-
-        print("DOCUMENT TYPE :", document.document_type)
-
-        print("=" * 60)
-
+        print("=" * 70)
         print()
 
         return document

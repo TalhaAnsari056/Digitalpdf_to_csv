@@ -1,55 +1,10 @@
-# import re
+from pathlib import Path
 
-
-# class CleaningAgent:
-
-#     @staticmethod
-#     def run(document):
-
-#         print("\nCleaning Data...\n")
-
-#         if document.document_type == "balance_sheet":
-
-#             CleaningAgent.clean_balance_sheet(document)
-
-#         elif document.document_type == "bank_statement":
-
-#             CleaningAgent.clean_bank_statement(document)
-
-#         return document
-
-#     @staticmethod
-#     def clean_balance_sheet(document):
-
-#         for record in document.parsed_data:
-
-#             record.account_name = re.sub(r"\s+", " ", record.account_name).strip()
-
-#             record.section = re.sub(r"\s+", " ", record.section).strip()
-
-#             if record.account_code:
-
-#                 record.account_code = record.account_code.strip()
-
-#     @staticmethod
-#     def clean_bank_statement(document):
-
-#         for record in document.parsed_data:
-
-#             record.description = re.sub(r"\s+", " ", record.description)
-
-#             record.description = record.description.strip()
-
-#             if record.currency:
-
-#                 record.currency = record.currency.upper()
-
-#             if record.date:
-
-#                 record.date = record.date.replace("-", "/")
+from config import OUTPUT_DIR
+from utils.json_utils import JsonUtils
 
 import re
-from dataclasses import fields
+import unicodedata
 
 
 class CleaningAgent:
@@ -57,23 +12,98 @@ class CleaningAgent:
     @staticmethod
     def run(document):
 
-        print("\nCleaning Data...\n")
+        markdown = document.markdown
 
-        if not document.parsed_data:
-            return document
+        ####################################################
+        # Unicode normalization
+        ####################################################
 
-        for record in document.parsed_data:
+        markdown = unicodedata.normalize("NFKC", markdown)
 
-            for field in fields(record):
+        ####################################################
+        # Remove invisible characters
+        ####################################################
 
-                value = getattr(record, field.name)
+        markdown = markdown.replace("\u200b", "")
+        markdown = markdown.replace("\ufeff", "")
+        markdown = markdown.replace("\u00a0", " ")
 
-                if isinstance(value, str):
+        ####################################################
+        # Normalize line endings
+        ####################################################
 
-                    value = re.sub(r"\s+", " ", value)
+        markdown = markdown.replace("\r\n", "\n")
+        markdown = markdown.replace("\r", "\n")
 
-                    value = value.strip()
+        ####################################################
+        # Remove trailing whitespace
+        ####################################################
 
-                    setattr(record, field.name, value)
+        markdown = "\n".join(line.rstrip() for line in markdown.splitlines())
+
+        ####################################################
+        # Collapse excessive blank lines
+        ####################################################
+
+        markdown = re.sub(r"\n{3,}", "\n\n", markdown)
+
+        ####################################################
+        # Remove Marker page separators
+        ####################################################
+
+        markdown = re.sub(
+            r"\n-{20,}\n",
+            "\n",
+            markdown,
+        )
+
+        ####################################################
+        # Final cleanup
+        ####################################################
+
+        markdown = markdown.strip()
+
+        document.cleaned_markdown = markdown
+
+        ####################################################
+        # Save cleaned markdown
+        ####################################################
+
+        output_folder = OUTPUT_DIR / Path(document.filepath).stem
+
+        cleaned_folder = output_folder / "cleaned"
+
+        cleaned_folder.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        cleaned_file = cleaned_folder / "cleaned_markdown.md"
+
+        cleaned_file.write_text(
+            markdown,
+            encoding="utf-8",
+        )
+
+        ####################################################
+        # Update extracted document json
+        ####################################################
+
+        JsonUtils.save(
+            document,
+            output_folder / "extracted_document.json",
+        )
+
+        ####################################################
+        # Console
+        ####################################################
+
+        print()
+        print("=" * 70)
+        print("CLEANING COMPLETED")
+        print("=" * 70)
+        print(f"Characters : {len(markdown):,}")
+        print("=" * 70)
+        print()
 
         return document

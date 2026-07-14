@@ -3,54 +3,89 @@ class ClassifierService:
     BANK_KEYWORDS = [
         "statement",
         "transaction",
+        "transactions",
         "account",
-        "balance",
-        "withdrawal",
+        "account number",
+        "account no",
+        "opening balance",
+        "closing balance",
         "deposit",
-        "currency",
-        "iban",
-        "credit",
+        "withdrawal",
         "debit",
+        "credit",
+        "value date",
+        "posting date",
+        "description",
+        "reference",
+        "balance",
+        "available balance",
+        "iban",
+        "swift",
     ]
 
     BALANCE_KEYWORDS = [
-        "assets",
-        "liabilities",
-        "equity",
         "balance sheet",
+        "assets",
         "current assets",
+        "non-current assets",
+        "fixed assets",
+        "liabilities",
         "current liabilities",
+        "non-current liabilities",
+        "equity",
+        "share capital",
         "retained earnings",
         "capital",
+        "inventory",
+        "cash and cash equivalents",
+        "accounts receivable",
+        "accounts payable",
         "total assets",
+        "total liabilities",
+        "total equity",
     ]
 
     @classmethod
     def classify(cls, document):
 
-        text = ""
-
-        for page in document.pages:
-
-            text += page.text.lower()
-
-            text += "\n"
+        text = document.cleaned_markdown.lower()
 
         bank_score = 0
-
         balance_score = 0
+
+        print("\n========== CLASSIFICATION ==========\n")
+
+        print("Bank Keyword Matches")
 
         for keyword in cls.BANK_KEYWORDS:
 
-            bank_score += text.count(keyword)
+            count = text.count(keyword)
+
+            if count:
+
+                print(f"{keyword:<30} {count}")
+
+            bank_score += count
+
+        print()
+
+        print("Balance Sheet Keyword Matches")
 
         for keyword in cls.BALANCE_KEYWORDS:
 
-            balance_score += text.count(keyword)
+            count = text.count(keyword)
 
-        print("Bank Score :", bank_score)
+            if count:
 
-        print("Balance Score :", balance_score)
+                print(f"{keyword:<30} {count}")
+
+            balance_score += count
+
+        print()
+
+        print(f"Bank Score          : {bank_score}")
+        print(f"Balance Sheet Score : {balance_score}")
+        print()
 
         if bank_score > balance_score:
 

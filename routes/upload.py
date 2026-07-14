@@ -17,6 +17,6 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     return {
         "message": "Processing Completed.",
-        "pages": len(document.pages),
+        # "pages": len(document.pages),
         "document_type": document.document_type,
     }

@@ -1,10 +1,11 @@
 from agents.extraction_agent import ExtractionAgent
+from agents.cleaning_agent import CleaningAgent
 from agents.classification_agent import ClassificationAgent
+
 from agents.bank_statement_agent import BankStatementAgent
 from agents.balance_sheet_agent import BalanceSheetAgent
-from services.normalization_service import NormalizationService
-from agents.cleaning_agent import CleaningAgent
-from agents.validation_agent import ValidationAgent
+
+# from agents.validation_agent import ValidationAgent
 from agents.csv_export_agent import CSVExportAgent
 
 
@@ -13,15 +14,40 @@ class ProcessingPipeline:
     @staticmethod
     def run(pdf_path):
 
-        # Step 1
+        print("\n" + "=" * 80)
+        print("AI PDF TO CSV PIPELINE")
+        print("=" * 80)
+
+        ############################################################
+        # STEP 1 - Marker Extraction
+        ############################################################
+
+        print("\n[1/6] Marker Extraction\n")
+
         document = ExtractionAgent.run(pdf_path)
 
-        document = NormalizationService.normalize(document)
+        ############################################################
+        # STEP 2 - Markdown Cleaning
+        ############################################################
 
-        # Step 2
+        print("\n[2/6] Cleaning Markdown\n")
+
+        document = CleaningAgent.run(document)
+
+        ############################################################
+        # STEP 3 - Rule-Based Classification
+        ############################################################
+
+        print("\n[3/6] Document Classification\n")
+
         document = ClassificationAgent.run(document)
 
-        # Step 3
+        ############################################################
+        # STEP 4 - Document Processing (Temporary)
+        ############################################################
+
+        print("\n[4/6] Document Processing\n")
+
         if document.document_type == "bank_statement":
 
             document = BankStatementAgent.run(document)
@@ -32,15 +58,26 @@ class ProcessingPipeline:
 
         else:
 
-            raise Exception("Unsupported document type.")
+            raise Exception(f"Unsupported document type: {document.document_type}")
 
-        # Step 4
-        document = CleaningAgent.run(document)
+        ############################################################
+        # STEP 5 - Validation
+        ############################################################
 
-        # Step 5
-        document = ValidationAgent.run(document)
+        # print("\n[5/6] Validation\n")
 
-        # Step 6
-        CSVExportAgent.run(document)
+        # document = ValidationAgent.run(document)
+
+        ############################################################
+        # STEP 6 - CSV Export
+        ############################################################
+
+        # print("\n[6/6] CSV Export\n")
+
+        # CSVExportAgent.run(document)
+
+        # print("\n" + "=" * 80)
+        # print("PIPELINE COMPLETED")
+        # print("=" * 80)
 
         return document
