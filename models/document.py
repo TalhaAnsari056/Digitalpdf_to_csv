@@ -33,7 +33,7 @@ class Document:
 
     # LLM output
     mapped_json: dict = field(default_factory=dict)
-
+    parsed_rows: list = field(default_factory=list)
     # Validation output
     validation_report: dict = field(default_factory=dict)
     validation_report_path: str = ""

@@ -3,7 +3,7 @@ import ollama
 
 class LLMService:
 
-    MODEL = "qwen3.5:9b"
+    MODEL = "qcwind/qwen2.5-7B-instruct-Q4_K_M"
 
     @staticmethod
     def generate(prompt: str) -> str:
@@ -22,7 +22,9 @@ class LLMService:
             ],
             options={
                 "temperature": 0,
-                "num_ctx": 32768,
+                "num_ctx": 4096,
+                # "num_ctx": 8192,
+                # "num_ctx": 32768,
             },
         )
 

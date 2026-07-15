@@ -23,36 +23,58 @@ class PromptBuilderService:
     def build_balance_sheet_prompt(markdown: str):
 
         return f"""
-You are an expert financial document extraction engine.
+You are an expert financial statement normalization engine.
 
-Your task is to extract every field from the balance sheet.
+Your task is NOT to summarize.
 
-STRICT RULES
+Your task is to convert the provided balance sheet into ONE standardized Markdown table.
 
-1. Return ONLY valid JSON.
-2. Do NOT explain anything.
-3. Do NOT wrap JSON inside markdown.
-4. Do NOT add comments.
-5. Missing values must be null.
-6. Never invent values.
-7. Preserve negative numbers.
-8. Preserve decimal values exactly.
-9. Preserve currency symbols if present.
-10. Return every row appearing in the table.
+--------------------------------------------------
+OUTPUT FORMAT
+--------------------------------------------------
 
-Expected JSON structure:
+Return EXACTLY ONE markdown table.
 
-{{
-    "company_name": "",
-    "report_date": "",
-    "currency": "",
-    "assets": [],
-    "liabilities": [],
-    "equity": [],
-    "totals": {{}}
-}}
+Do NOT return JSON.
 
-Document:
+Do NOT explain anything.
+
+Do NOT wrap the table inside markdown code fences.
+
+Do NOT add any text before or after the table.
+
+--------------------------------------------------
+COLUMN NAMES
+--------------------------------------------------
+
+Use EXACTLY these columns.
+
+| section | account_code | account_name | amount | currency |
+
+--------------------------------------------------
+MAPPING RULES
+--------------------------------------------------
+- LINE-BY-LINE EXTRACTION: Extract every single financial line. If a row has text and a number, it MUST be in the output table.
+- NO ACCOUNT CODES? If the document does not use numbering/account codes, strictly leave the 'account_code' column completely empty. Do NOT invent codes.
+- HANDLING SUB-HEADINGS: Do not skip rows that are just headings or sub-totals (e.g., "Total Current Assets"). Map them with an empty 'account_code'.
+- SINGLE YEAR ASSIGNMENT: If multiple columns of figures exist for different years, extract the values for the LATEST year only.
+- Convert every account into one row.
+- Preserve the original row order.
+- Preserve all numeric values exactly.
+- Preserve negative values.
+- Preserve decimal values.
+- Preserve currency symbols if available.
+- Never invent values.
+- Never calculate totals.
+- Never merge rows.
+- Never split rows.
+- If a value is unavailable, leave the cell empty.
+- Standardize section names where possible
+  (Assets, Liabilities, Equity).
+
+--------------------------------------------------
+DOCUMENT
+--------------------------------------------------
 
 {markdown}
 """
@@ -65,35 +87,62 @@ Document:
     def build_bank_statement_prompt(markdown: str):
 
         return f"""
-You are an expert bank statement extraction engine.
+You are an expert bank statement normalization engine.
 
-Extract every transaction from the statement.
+Your task is NOT to summarize.
 
-STRICT RULES
+Your task is to convert the statement into ONE standardized Markdown table.
 
-1. Return ONLY valid JSON.
-2. Do NOT explain.
-3. Do NOT use markdown.
-4. Missing values must be null.
-5. Never invent data.
-6. Preserve dates exactly.
-7. Preserve decimal values exactly.
-8. Preserve negative values.
-9. Preserve transaction order.
+--------------------------------------------------
+OUTPUT FORMAT
+--------------------------------------------------
 
-Expected JSON structure:
+Return EXACTLY ONE markdown table.
 
-{{
-    "bank_name": "",
-    "account_number": "",
-    "account_holder": "",
-    "currency": "",
-    "opening_balance": "",
-    "closing_balance": "",
-    "transactions": []
-}}
+Do NOT return JSON.
 
-Document:
+Do NOT explain anything.
+
+Do NOT wrap the table inside markdown code fences.
+
+Do NOT add any text before or after the table.
+
+--------------------------------------------------
+COLUMN NAMES
+--------------------------------------------------
+
+Use EXACTLY these columns.
+
+| date | description | reference | debit | credit | balance | currency |
+
+--------------------------------------------------
+MAPPING RULES
+--------------------------------------------------
+
+- Preserve transaction order.
+- Preserve every transaction.
+- Preserve dates exactly.
+- Preserve numeric values exactly.
+- Preserve negative values.
+- Preserve decimal values.
+- Preserve currency if available.
+- Never invent transactions.
+- Never merge transactions.
+- Never split transactions.
+- If a value is unavailable, leave the cell empty.
+
+--------------------------------------------------
+EXAMPLE
+--------------------------------------------------
+
+| date | description | reference | debit | credit | balance | currency |
+| ---- | ----------- | --------- | ----- | ------ | ------- | -------- |
+| 01/01/2025 | ATM Withdrawal | ATM123 | 500 | | 1500 | PKR |
+| 02/01/2025 | Salary | SAL001 | | 50000 | 51500 | PKR |
+
+--------------------------------------------------
+DOCUMENT
+--------------------------------------------------
 
 {markdown}
 """
