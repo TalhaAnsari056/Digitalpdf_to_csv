@@ -3,7 +3,8 @@ from pathlib import Path
 from config import OUTPUT_DIR
 from models.document import Document
 from services.marker_service import MarkerService
-from utils.json_utils import JsonUtils
+
+# from utils.json_utils import JsonUtils
 
 
 class ExtractionAgent:
@@ -68,10 +69,10 @@ class ExtractionAgent:
         # Save Document JSON
         ####################################################
 
-        JsonUtils.save(
-            document,
-            output_folder / "extracted_document.json",
-        )
+        # JsonUtils.save(
+        #     document,
+        #     output_folder / "extracted_document.json",
+        # )
 
         ####################################################
         # Console Output

@@ -74,11 +74,14 @@
 
 #         return document
 from agents.extraction_agent import ExtractionAgent
+
 from agents.cleaning_agent import CleaningAgent
 from agents.classification_agent import ClassificationAgent
 from agents.llm_extraction_agent import LLMExtractionAgent
+from agents.markdown_table_parser_agent import MarkdownTableParserAgent
+from agents.csv_export_agent import CSVExportAgent
 
-# from agents.csv_export_agent import CSVExportAgent
+from agents.csv_export_agent import CSVExportAgent
 
 
 class ProcessingPipeline:
@@ -121,14 +124,16 @@ class ProcessingPipeline:
         print("\n[4/5] LLM Mapping\n")
 
         document = LLMExtractionAgent.run(document)
-
+        ############################################################
+        # STEP 5
+        document = MarkdownTableParserAgent.run(document)
         ############################################################
         # STEP 5 - CSV Export
         ############################################################
 
-        # print("\n[5/5] CSV Export\n")
+        print("\n[5/5] CSV Export\n")
 
-        # CSVExportAgent.run(document)
+        CSVExportAgent.run(document)
 
         print("\n" + "=" * 80)
         print("PIPELINE COMPLETED")

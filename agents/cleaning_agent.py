@@ -1,7 +1,8 @@
 from pathlib import Path
 
 from config import OUTPUT_DIR
-from utils.json_utils import JsonUtils
+
+# from utils.json_utils import JsonUtils
 
 import re
 import unicodedata
@@ -89,10 +90,10 @@ class CleaningAgent:
         # Update extracted document json
         ####################################################
 
-        JsonUtils.save(
-            document,
-            output_folder / "extracted_document.json",
-        )
+        # JsonUtils.save(
+        #     document,
+        #     output_folder / "extracted_document.json",
+        # )
 
         ####################################################
         # Console

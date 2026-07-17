@@ -1,5 +1,6 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from agents.extraction_agent import ExtractionAgent
+
+# from agents.extraction_agent import ExtractionAgent
 from agents.upload_agent import UploadAgent
 from pipeline.processing_pipeline import ProcessingPipeline
 

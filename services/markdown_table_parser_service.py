@@ -1,19 +1,16 @@
-import json
-from pathlib import Path
-
-from config import OUTPUT_DIR
+import io
+import pandas as pd
 
 
 class MarkdownTableParserService:
 
     @staticmethod
-    def parse(document):
+    def parse(markdown: str) -> pd.DataFrame:
 
-        print("\n" + "=" * 60)
-        print("MARKDOWN TABLE PARSER")
-        print("=" * 60)
+        markdown = markdown.strip()
 
-        markdown = document.llm_response.strip()
+        if not markdown:
+            raise ValueError("Empty markdown received.")
 
         lines = []
 
@@ -21,68 +18,48 @@ class MarkdownTableParserService:
 
             line = line.strip()
 
-            if line.startswith("|"):
+            if not line:
+                continue
 
-                lines.append(line)
+            if not line.startswith("|"):
+                continue
+
+            # Skip separator row
+            if (
+                set(line.replace("|", "").replace("-", "").replace(":", "").strip())
+                == set()
+            ):
+                continue
+
+            lines.append(line)
 
         if len(lines) < 2:
-            raise Exception("No markdown table found.")
+            raise ValueError("No markdown table found.")
 
-        # -----------------------------------------
-        # Header
-        # -----------------------------------------
+        csv_lines = []
 
-        headers = [column.strip() for column in lines[0].strip("|").split("|")]
+        for line in lines:
 
-        # -----------------------------------------
-        # Skip separator row
-        # -----------------------------------------
+            cells = [cell.strip() for cell in line.strip("|").split("|")]
 
-        data_lines = lines[2:]
+            csv_lines.append(",".join(cells))
 
-        records = []
+        csv_text = "\n".join(csv_lines)
 
-        for line in data_lines:
+        print("\nParsed Markdown Table")
+        print("-" * 40)
+        print(markdown)
 
-            values = [value.strip() for value in line.strip("|").split("|")]
+        dataframe = pd.read_csv(
+            io.StringIO(csv_text),
+            dtype=str,
+            keep_default_na=False,
+        )
 
-            # pad missing columns
-            while len(values) < len(headers):
-                values.append("")
+        dataframe.columns = [
+            column.strip().lower().replace(" ", "_") for column in dataframe.columns
+        ]
 
-            # remove extra columns
-            values = values[: len(headers)]
+        dataframe = dataframe.fillna("")
 
-            records.append(dict(zip(headers, values)))
-
-        document.parsed_rows = records
-
-        # -----------------------------------------
-        # Save JSON (debugging only)
-        # -----------------------------------------
-
-        output_folder = OUTPUT_DIR / Path(document.filename).stem
-
-        parsed_folder = output_folder / "parsed"
-
-        parsed_folder.mkdir(parents=True, exist_ok=True)
-
-        parsed_file = parsed_folder / "parsed_rows.json"
-
-        with open(
-            parsed_file,
-            "w",
-            encoding="utf-8",
-        ) as file:
-
-            json.dump(
-                records,
-                file,
-                indent=4,
-                ensure_ascii=False,
-            )
-
-        print(f"Rows Parsed : {len(records)}")
-        print(f"Saved       : {parsed_file}")
-
-        return document
+        return dataframe

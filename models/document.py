@@ -9,9 +9,6 @@ class Document:
 
     filepath: str
 
-    # Marker output
-    markdown_path: str = ""
-
     markdown: str = ""
     markdown_path: str = ""
 
@@ -28,11 +25,15 @@ class Document:
     llm_response: str = ""
     llm_response_path: str = ""
 
+    mapped_markdown: str = ""
+
+    dataframe: object | None = None
+
     structured_data: dict = field(default_factory=dict)
     structured_data_path: str = ""
 
     # LLM output
-    mapped_json: dict = field(default_factory=dict)
+    # mapped_json: dict = field(default_factory=dict)
     parsed_rows: list = field(default_factory=list)
     # Validation output
     validation_report: dict = field(default_factory=dict)

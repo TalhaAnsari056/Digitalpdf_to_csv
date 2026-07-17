@@ -1,5 +1,4 @@
-import csv
-from dataclasses import asdict
+from pathlib import Path
 
 from config import OUTPUT_DIR
 
@@ -9,30 +8,32 @@ class CSVExportAgent:
     @staticmethod
     def run(document):
 
-        print("Exporting CSV...")
+        print("\n" + "=" * 60)
+        print("CSV EXPORT")
+        print("=" * 60)
 
-        if not document.parsed_data:
+        if document.dataframe is None:
 
-            print("Nothing to export.")
+            print("No dataframe available.")
 
-            return
+            return document
 
-        csv_folder = OUTPUT_DIR / document.filename.replace(".pdf", "") / "csv"
+        output_folder = OUTPUT_DIR / Path(document.filename).stem
+
+        csv_folder = output_folder / "csv"
 
         csv_folder.mkdir(parents=True, exist_ok=True)
 
         csv_file = csv_folder / "output.csv"
 
-        rows = [asdict(record) for record in document.parsed_data]
+        document.dataframe.to_csv(
+            csv_file,
+            index=False,
+            encoding="utf-8",
+        )
 
-        headers = rows[0].keys()
+        document.csv_path = str(csv_file)
 
-        with open(csv_file, "w", newline="", encoding="utf-8") as file:
+        print(f"CSV saved : {csv_file}")
 
-            writer = csv.DictWriter(file, fieldnames=headers)
-
-            writer.writeheader()
-
-            writer.writerows(rows)
-
-        print(f"CSV Saved : {csv_file}")
+        return document
