@@ -1,65 +1,143 @@
-import io
+from __future__ import annotations
+
 import pandas as pd
 
 
 class MarkdownTableParserService:
 
+    REQUIRED_COLUMNS = [
+        "row_type",
+        "section",
+        "subsection",
+        "account_code",
+        "account_name",
+        "amount",
+        "currency",
+    ]
+
     @staticmethod
-    def parse(markdown: str) -> pd.DataFrame:
+    def _is_separator(line: str) -> bool:
+        """
+        Detect markdown separator row.
+
+        Example:
+        |-----|------|-----|
+        """
+
+        text = line.replace("|", "").replace("-", "").replace(":", "").strip()
+
+        return text == ""
+
+    @classmethod
+    def parse(cls, markdown: str) -> pd.DataFrame:
+
+        if markdown is None:
+            raise ValueError("Markdown is None.")
 
         markdown = markdown.strip()
 
-        if not markdown:
+        if markdown == "":
             raise ValueError("Empty markdown received.")
 
-        lines = []
+        ##############################################################
+        # Keep only markdown table rows
+        ##############################################################
+
+        table_lines = []
 
         for line in markdown.splitlines():
 
             line = line.strip()
 
-            if not line:
-                continue
-
             if not line.startswith("|"):
                 continue
 
-            # Skip separator row
-            if (
-                set(line.replace("|", "").replace("-", "").replace(":", "").strip())
-                == set()
-            ):
+            if cls._is_separator(line):
                 continue
 
-            lines.append(line)
+            table_lines.append(line)
 
-        if len(lines) < 2:
+        if len(table_lines) < 2:
             raise ValueError("No markdown table found.")
 
-        csv_lines = []
+        ##############################################################
+        # Header
+        ##############################################################
 
-        for line in lines:
+        headers = [
+            cell.strip().lower().replace(" ", "_")
+            for cell in table_lines[0].strip("|").split("|")
+        ]
+        print("\nDetected Headers")
+        print(headers)
+
+        ##############################################################
+        # Validate expected columns
+        ##############################################################
+        print("\nDetected Headers")
+        print(headers)
+        missing = []
+
+        for column in cls.REQUIRED_COLUMNS:
+
+            if column not in headers:
+                missing.append(column)
+
+        if missing:
+            raise ValueError(f"Missing required markdown columns: {missing}")
+
+        ##############################################################
+        # Parse rows
+        ##############################################################
+
+        records = []
+
+        for line in table_lines[1:]:
 
             cells = [cell.strip() for cell in line.strip("|").split("|")]
 
-            csv_lines.append(",".join(cells))
+            # Fix short rows
 
-        csv_text = "\n".join(csv_lines)
+            if len(cells) < len(headers):
 
-        print("\nParsed Markdown Table")
-        print("-" * 40)
-        print(markdown)
+                cells.extend([""] * (len(headers) - len(cells)))
 
-        dataframe = pd.read_csv(
-            io.StringIO(csv_text),
-            dtype=str,
-            keep_default_na=False,
-        )
+            # Ignore extra cells instead of crashing
 
-        dataframe.columns = [
-            column.strip().lower().replace(" ", "_") for column in dataframe.columns
-        ]
+            if len(cells) > len(headers):
+
+                cells = cells[: len(headers)]
+
+            record = dict(zip(headers, cells))
+
+            records.append(record)
+
+        ##############################################################
+        # DataFrame
+        ##############################################################
+
+        dataframe = pd.DataFrame(records)
 
         dataframe = dataframe.fillna("")
+
+        dataframe = dataframe.astype(str)
+
+        ##############################################################
+        # Terminal Debug
+        ##############################################################
+
+        print("\n" + "=" * 60)
+        print("PARSED DATAFRAME")
+        print("=" * 60)
+
+        print(f"Rows    : {len(dataframe)}")
+        print(f"Columns : {len(dataframe.columns)}")
+
+        print()
+
+        print(dataframe.head(10))
+
+        print("=" * 60)
+        print()
 
         return dataframe

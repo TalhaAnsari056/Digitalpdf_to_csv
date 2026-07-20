@@ -16,7 +16,7 @@ DOCUMENT_TYPE = "balance_sheet"
 MARKDOWN_FILE = (
     PROJECT_ROOT
     / "output"
-    / "Balance-Sheet-Example_digitalPDF_6-"
+    / "Balance-Sheet-Example_digitalPDF_6--"
     / "cleaned"
     / "cleaned_markdown.md"
 )

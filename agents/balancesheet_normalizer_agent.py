@@ -2,24 +2,27 @@ from pathlib import Path
 import json
 
 from config import OUTPUT_DIR
+from services.balancesheet_normalizer_service import (
+    BalancesheetNormalizerService,
+)
 
 
-class CSVExportAgent:
+class BalanceSheetNormalizerAgent:
 
     @staticmethod
     def run(document):
 
         print("\n" + "=" * 70)
-        print("CSV EXPORT AGENT")
+        print("BALANCE SHEET NORMALIZER")
         print("=" * 70)
 
         ###########################################################
-        # Validate dataframe
+        # Normalize dataframe
         ###########################################################
 
-        if document.dataframe is None:
+        dataframe = BalancesheetNormalizerService.normalize(document.dataframe)
 
-            raise ValueError("No dataframe available for CSV export.")
+        document.dataframe = dataframe
 
         ###########################################################
         # Output folders
@@ -27,39 +30,39 @@ class CSVExportAgent:
 
         output_folder = OUTPUT_DIR / Path(document.filename).stem
 
-        csv_folder = output_folder / "csv"
+        normalize_folder = output_folder / "normalized_dataframe"
 
-        csv_folder.mkdir(
+        normalize_folder.mkdir(
             parents=True,
             exist_ok=True,
         )
 
         ###########################################################
-        # CSV file
+        # Save normalized dataframe
         ###########################################################
 
-        csv_file = csv_folder / "output.csv"
+        normalized_csv = normalize_folder / "normalized_dataframe.csv"
 
-        document.dataframe.to_csv(
-            csv_file,
+        dataframe.to_csv(
+            normalized_csv,
             index=False,
-            encoding="utf-8-sig",
+            encoding="utf-8",
         )
 
-        document.csv_path = str(csv_file)
-
         ###########################################################
-        # Save CSV metadata
+        # Save metadata
         ###########################################################
 
         info = {
-            "rows": int(document.dataframe.shape[0]),
-            "columns": int(document.dataframe.shape[1]),
-            "column_names": list(document.dataframe.columns),
-            "csv_file": str(csv_file),
+            "rows": int(dataframe.shape[0]),
+            "columns": int(dataframe.shape[1]),
+            "column_names": list(dataframe.columns),
+            "column_types": {
+                column: str(dtype) for column, dtype in dataframe.dtypes.items()
+            },
         }
 
-        info_file = csv_folder / "csv_info.json"
+        info_file = normalize_folder / "normalization_info.json"
 
         with open(
             info_file,
@@ -78,15 +81,15 @@ class CSVExportAgent:
         # Terminal
         ###########################################################
 
-        print("\nCSV Export Summary")
+        print("\nNormalization Summary")
         print("-" * 40)
-        print(f"Rows          : {document.dataframe.shape[0]}")
-        print(f"Columns       : {document.dataframe.shape[1]}")
-        print(f"Folder        : {csv_folder}")
-        print(f"CSV           : {csv_file.name}")
+        print(f"Rows          : {dataframe.shape[0]}")
+        print(f"Columns       : {dataframe.shape[1]}")
+        print(f"Folder        : {normalize_folder}")
+        print(f"CSV           : {normalized_csv.name}")
         print(f"Info          : {info_file.name}")
 
-        print("\nCSV Export completed successfully.")
+        print("\nBalance Sheet Normalization Completed.")
         print("=" * 70)
 
         return document

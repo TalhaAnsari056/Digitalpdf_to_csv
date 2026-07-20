@@ -10,15 +10,15 @@ class MarkdownTableParserAgent:
     @staticmethod
     def run(document):
 
-        print("\n" + "=" * 60)
+        print("\n" + "=" * 70)
         print("MARKDOWN TABLE PARSER")
-        print("=" * 60)
+        print("=" * 70)
 
         ###########################################################
         # Parse markdown into DataFrame
         ###########################################################
 
-        dataframe = MarkdownTableParserService.parse(document.markdown)
+        dataframe = MarkdownTableParserService.parse(document.mapped_markdown)
 
         document.dataframe = dataframe
 
@@ -44,6 +44,8 @@ class MarkdownTableParserAgent:
             encoding="utf-8",
         )
 
+        document.dataframe_path = str(dataframe_file)
+
         ###########################################################
         # Save dataframe information
         ###########################################################
@@ -52,6 +54,9 @@ class MarkdownTableParserAgent:
             "rows": int(dataframe.shape[0]),
             "columns": int(dataframe.shape[1]),
             "column_names": list(dataframe.columns),
+            "column_types": {
+                column: str(dtype) for column, dtype in dataframe.dtypes.items()
+            },
         }
 
         info_file = dataframe_folder / "dataframe_info.json"
@@ -73,8 +78,15 @@ class MarkdownTableParserAgent:
         # Terminal
         ###########################################################
 
-        print(f"Rows    : {dataframe.shape[0]}")
-        print(f"Columns : {dataframe.shape[1]}")
-        print(f"Saved   : {dataframe_file}")
+        print("\nParsing Summary")
+        print("-" * 40)
+        print(f"Rows          : {dataframe.shape[0]}")
+        print(f"Columns       : {dataframe.shape[1]}")
+        print(f"Output Folder : {dataframe_folder}")
+        print(f"CSV           : {dataframe_file.name}")
+        print(f"Info          : {info_file.name}")
+
+        print("\nMarkdown Table Parser completed successfully.")
+        print("=" * 70)
 
         return document

@@ -165,7 +165,7 @@ class PromptBuilderService:
         return f"""
 You are an expert financial statement normalization engine.
 
-Your ONLY job is to normalize the document into ONE standardized markdown table.
+Your ONLY task is to normalize the financial statement into ONE standardized markdown table for automated parsing.
 
 You are NOT summarizing.
 
@@ -173,12 +173,12 @@ You are NOT interpreting.
 
 You are NOT calculating.
 
-You are NOT reformatting for humans.
+You are NOT improving formatting.
 
-You are producing structured data for an automated parser.
+You are ONLY extracting structured data.
 
 ==================================================
-OUTPUT RULES
+OUTPUT
 ==================================================
 
 Return EXACTLY ONE markdown table.
@@ -187,11 +187,9 @@ Do NOT return JSON.
 
 Do NOT explain anything.
 
-Do NOT wrap inside ```.
+Do NOT use markdown code fences.
 
-Do NOT output any text before the table.
-
-Do NOT output any text after the table.
+Do NOT output any text before or after the table.
 
 ==================================================
 OUTPUT SCHEMA
@@ -201,149 +199,141 @@ Use EXACTLY these columns.
 
 | row_type | section | subsection | account_code | account_name | amount | currency |
 
+Do NOT add or remove columns.
+
 ==================================================
-ROW TYPE
+ROW TYPES
 ==================================================
 
-Every row MUST belong to exactly ONE of these types.
+Every row MUST be exactly ONE of these types.
 
 SECTION
-
 SUBSECTION
-
 ACCOUNT
-
 TOTAL
 
 ==================================================
 SECTION
 ==================================================
 
-SECTION represents the highest financial category.
+Represents the highest financial category.
 
 Examples
 
 Assets
-
 Liabilities
-
 Equity
 
-Only SECTION rows populate the section column.
+Rules
+
+- section contains the section name.
+- subsection is empty.
+- account_code is empty.
+- account_name is empty.
+- amount is empty.
+- currency is empty.
+
+Exactly ONE SECTION row should be emitted when a new top-level section begins.
 
 ==================================================
 SUBSECTION
 ==================================================
 
-SUBSECTION represents a grouping inside a section.
+Represents a grouping inside a section.
 
 Examples
 
 Current Assets
-
 Non-Current Assets
-
 Current Liabilities
+Non-Current Liabilities
 
-Long-Term Liabilities
+Rules
 
-Only SUBSECTION rows populate the subsection column.
+- section contains the parent section.
+- subsection contains the subsection name.
+- account_code is empty.
+- account_name is empty.
+- amount is empty.
+- currency is empty.
 
-Do NOT place subsection names inside account_name.
+Create exactly ONE SUBSECTION row.
+
+The subsection row must NEVER contain the first account.
+
+The first account after a subsection MUST become its own ACCOUNT row.
 
 ==================================================
 ACCOUNT
 ==================================================
 
-ACCOUNT rows represent actual ledger accounts.
+Represents a real financial account.
 
 Examples
 
 Cash
-
 Checking
-
-Savings
-
-Accounts Receivable
-
 Inventory
-
+Accounts Receivable
+Equipment
 Retained Earnings
 
-Only ACCOUNT rows may contain an account_code.
+Rules
 
-If the source document has no account code,
+- Repeat the current section.
+- Repeat the current subsection if one exists.
+- account_name contains ONLY the account name.
+- account_code contains ONLY the account code if present.
+- amount contains ONLY the account amount.
+- currency contains the currency if shown.
 
-leave account_code empty.
+Never place subsection names inside account_name.
+
+Never merge an account into a subsection row.
+
+Never combine multiple accounts into one row.
+
+Every ACCOUNT row represents exactly ONE account.
 
 ==================================================
 TOTAL
 ==================================================
 
-TOTAL rows represent subtotal or total rows.
+Represents subtotal or total rows.
 
 Examples
 
 Total Current Assets
-
 Total Assets
-
 Total Liabilities
-
 Total Equity
-
 Total Liabilities and Equity
 
-TOTAL rows never contain account codes.
+Rules
+
+- Repeat the current section.
+- Repeat the current subsection if applicable.
+- account_code is empty.
+- account_name contains the total label exactly as written.
+- amount contains the reported value.
+
+Never calculate totals.
+
+Never invent totals.
 
 ==================================================
-IMPORTANT RULES
+GENERAL EXTRACTION RULES
 ==================================================
 
 Extract EVERY financial row.
 
 Never skip rows.
 
-Preserve original order.
+Never omit rows.
 
-Never invent values.
+Never invent rows.
 
-Never calculate totals.
-
-Never merge rows.
-
-Never merge accounts.
-
-Never split one account across multiple rows.
-
-If two accounts appear on the same OCR line,
-
-create TWO markdown rows.
-
-Never use <br>.
-
-Never place two account codes in one row.
-
-Never place two account names in one row.
-
-Every markdown row must represent exactly ONE logical record.
-
-If account code does not exist,
-
-leave it blank.
-
-If amount does not exist,
-
-leave it blank.
-
-If currency does not exist,
-
-leave it blank.
-
-If multiple years are present,
-
-extract ONLY the latest year.
+Preserve the original document order.
 
 Preserve every numeric value exactly.
 
@@ -353,20 +343,59 @@ Preserve decimal values.
 
 Preserve currency symbols.
 
+If account codes do not exist, leave account_code empty.
+
+If amount does not exist, leave amount empty.
+
+If currency does not exist, leave currency empty.
+
+If multiple reporting years exist, extract ONLY the latest year.
+
+If one OCR line contains multiple accounts, split them into separate ACCOUNT rows.
+
+Never place multiple account names into one row.
+
+Never place multiple account codes into one row.
+
+Never use HTML tags.
+
+Never use <br>.
+
 ==================================================
-GOOD EXAMPLE
+HIERARCHY
+==================================================
+
+Think of the document as a hierarchy.
+
+SECTION
+    ↓
+SUBSECTION (optional)
+    ↓
+ACCOUNT
+    ↓
+TOTAL
+
+Each row belongs to exactly ONE level.
+
+Do NOT merge two levels into one row.
+
+==================================================
+EXAMPLE
 ==================================================
 
 | row_type | section | subsection | account_code | account_name | amount | currency |
-|----------|----------|------------|--------------|--------------|--------|----------|
+|----------|---------|------------|--------------|--------------|--------|----------|
 | SECTION | Assets | | | | | |
 | SUBSECTION | Assets | Current Assets | | | | |
 | ACCOUNT | Assets | Current Assets | 1000 | Cash | 898402 | |
 | ACCOUNT | Assets | Current Assets | 1010 | Checking | 583961 | |
 | ACCOUNT | Assets | Current Assets | 1020 | Savings | 224600 | |
+| ACCOUNT | Assets | Current Assets | 1030 | Petty Cash | 89840 | |
+| ACCOUNT | Assets | Current Assets | 1100 | Accounts Receivable | 3593607 | |
 | TOTAL | Assets | Current Assets | | Total Current Assets | 5356121 | |
 | SUBSECTION | Assets | Non-Current Assets | | | | |
-| ACCOUNT | Assets | Non-Current Assets | 1400 | Equipment | 185167 | |
+| ACCOUNT | Assets | Non-Current Assets | 1400 | Net Computer Equipment | 185167 | |
+| ACCOUNT | Assets | Non-Current Assets | 1500 | Net Furniture, Fixtures, & Equipment | 178309 | |
 | TOTAL | Assets | Non-Current Assets | | Total Non-Current Assets | 1501908 | |
 | TOTAL | Assets | | | Total Assets | 6858029 | |
 
@@ -374,7 +403,8 @@ GOOD EXAMPLE
 DOCUMENT
 ==================================================
 
-{markdown}
+{markdown}    
+
 """
 
     # ==========================================================

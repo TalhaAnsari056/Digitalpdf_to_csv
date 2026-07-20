@@ -74,14 +74,15 @@
 
 #         return document
 from agents.extraction_agent import ExtractionAgent
-
+from agents.balancesheet_normalizer_agent import BalanceSheetNormalizerAgent
 from agents.cleaning_agent import CleaningAgent
 from agents.classification_agent import ClassificationAgent
 from agents.llm_extraction_agent import LLMExtractionAgent
 from agents.markdown_table_parser_agent import MarkdownTableParserAgent
+from agents.balancesheet_validator_agent import BalanceSheetValidatorAgent
 from agents.csv_export_agent import CSVExportAgent
-
 from agents.csv_export_agent import CSVExportAgent
+from agents.excel_formatter_agent import ExcelFormatterAgent
 
 
 class ProcessingPipeline:
@@ -127,15 +128,42 @@ class ProcessingPipeline:
         ############################################################
         # STEP 5
         document = MarkdownTableParserAgent.run(document)
+
         ############################################################
-        # STEP 5 - CSV Export
+        # STEP 6 - DataFrame Normalization
         ############################################################
 
-        print("\n[5/5] CSV Export\n")
+        if document.document_type == "balance_sheet":
+
+            document = BalanceSheetNormalizerAgent.run(document)
+
+        elif document.document_type == "bank_statement":
+
+            # We'll build this later
+            pass
+
+        ############################################################
+        # STEP 7 - Balance Sheet Validation
+        ############################################################
+        document = BalanceSheetValidatorAgent.run(document)
+
+        ############################################################
+        # STEP 8 - CSV Export
+        ############################################################
+
+        print("\n[8/8] CSV Export\n")
 
         CSVExportAgent.run(document)
 
         print("\n" + "=" * 80)
+
+        ############################################################
+        # STEP 9 - Excel Formatter
+        ############################################################
+
+        print("\n[9/9] Excel Formatter\n")
+
+        document = ExcelFormatterAgent.run(document)
         print("PIPELINE COMPLETED")
         print("=" * 80)
 

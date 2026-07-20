@@ -26,8 +26,10 @@ class Document:
     llm_response_path: str = ""
 
     mapped_markdown: str = ""
+    mapped_markdown_path: str = ""
 
     dataframe: object | None = None
+    dataframe_path: str = ""
 
     structured_data: dict = field(default_factory=dict)
     structured_data_path: str = ""
@@ -40,3 +42,4 @@ class Document:
     validation_report_path: str = ""
     # CSV
     csv_path: str = ""
+    excel_path: str = ""

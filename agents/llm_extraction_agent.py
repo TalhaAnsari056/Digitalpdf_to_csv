@@ -85,12 +85,9 @@ class LLMExtractionAgent:
 
         mapped_markdown = LLMService.generate(prompt)
 
-        document.llm_response = mapped_markdown
-
         ####################################################
         # Save Mapped Markdown
         ####################################################
-
         llm_folder = output_folder / "llm"
 
         llm_folder.mkdir(parents=True, exist_ok=True)
@@ -100,6 +97,26 @@ class LLMExtractionAgent:
         with open(markdown_file, "w", encoding="utf-8") as file:
             file.write(mapped_markdown)
 
-        print(f"Mapped markdown saved : {markdown_file}")
+        ############################################################
+        # Update Document
+        ############################################################
+
+        document.llm_response = mapped_markdown
+        document.mapped_markdown = mapped_markdown
+
+        document.llm_response_path = str(markdown_file)
+        document.mapped_markdown_path = str(markdown_file)
+
+        ############################################################
+        # Terminal
+        ############################################################
+
+        print("\nLLM Mapping Summary")
+        print("-" * 40)
+        print(f"Prompt Saved      : {prompt_file.name}")
+        print(f"Mapped Markdown   : {markdown_file.name}")
+
+        print("\nLLM Extraction completed successfully.")
+        print("=" * 70)
 
         return document
