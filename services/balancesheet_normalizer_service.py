@@ -29,127 +29,123 @@ class BalancesheetNormalizerService:
 
         return dataframe.reset_index(drop=True)
 
-    @staticmethod
-    def _expand_multiline_rows(df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Split rows where the LLM packed multiple accounts into one row.
 
-        Handles cases like:
+@staticmethod
+def _expand_multiline_rows(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Split rows that contain multiple logical records separated by <br>.
 
-        account_code:
-            1500<br>1600
+    Handles examples like:
 
-        account_name:
-            Cash<br>Bank
+    account_code:
+        1500<br>1600
 
-        amount:
-            100<br>200
+    account_name:
+        Cash<br>Bank
 
-        OR
+    amount:
+        100<br>200
 
-        account_name:
-            1500 Cash<br>1600 Bank
+    OR
 
-        amount:
-            100<br>200
+    account_code:
+        1500
 
-        Works for any future PDF that follows the same pattern.
-        """
+    account_name:
+        Net Furniture...<br>1600 Net Field Equipment
 
-        rows = []
+    amount:
+        178309<br>205741
 
-        for _, row in df.iterrows():
+    Also supports OCR outputs that contain:
+        <br>
+        <br/>
+        <BR>
+        newline characters
 
-            row = row.copy()
+    without changing the meaning of the data.
+    """
 
-            ############################################################
-            # Split every column on <br>
-            ############################################################
+    rows = []
 
-            split_columns = {}
+    for _, row in df.iterrows():
 
-            max_parts = 1
+        row = row.copy()
 
-            for col in df.columns:
+        ############################################################
+        # Split every column
+        ############################################################
 
-                value = str(row[col]).strip()
+        split_columns = {}
+        max_parts = 1
 
-                parts = [p.strip() for p in re.split(r"<br\s*/?>", value) if p.strip()]
+        for column in df.columns:
 
-                split_columns[col] = parts
+            value = str(row[column]).strip()
 
-                max_parts = max(max_parts, len(parts))
+            parts = [
+                part.strip()
+                for part in re.split(r"<br\s*/?>|\n", value, flags=re.IGNORECASE)
+                if part.strip()
+            ]
 
-            ############################################################
-            # Normal row
-            ############################################################
+            if not parts:
+                parts = [""]
 
-            if max_parts == 1:
-                rows.append(row)
-                continue
+            split_columns[column] = parts
+            max_parts = max(max_parts, len(parts))
 
-            ############################################################
-            # Expand into multiple rows
-            ############################################################
+        ############################################################
+        # Normal row
+        ############################################################
 
-            for i in range(max_parts):
+        if max_parts == 1:
+            rows.append(row)
+            continue
 
-                new_row = row.copy()
+        ############################################################
+        # Expand into multiple logical rows
+        ############################################################
 
-                for col in df.columns:
+        for index in range(max_parts):
 
-                    parts = split_columns[col]
+            new_row = row.copy()
 
-                    if len(parts) == max_parts:
-                        value = parts[i]
+            for column in df.columns:
 
-                    elif len(parts) == 1:
-                        value = parts[0]
+                parts = split_columns[column]
 
-                    else:
-                        value = ""
+                if len(parts) == max_parts:
+                    value = parts[index]
 
-                    new_row[col] = value
+                elif len(parts) == 1:
+                    value = parts[0]
 
-                ########################################################
-                # Detect embedded account code
-                #
-                # Example:
-                # 1600 Net Field Equipment
-                #
-                # This works whether account_code is empty
-                # OR incorrectly inherited from the previous row.
-                ########################################################
+                else:
+                    value = ""
 
-            # name = str(new_row.get("account_name", "")).strip()
+                new_row[column] = value
 
-            # match = re.match(r"^(\d{3,})\s+(.+)$", name)
+            ########################################################
+            # Detect embedded account code
+            #
+            # Example:
+            #
+            # 1600 Net Field Equipment
+            #
+            # Override inherited account code if present.
+            ########################################################
 
-            # if match:
+            name = str(new_row.get("account_name", "")).strip()
 
-            #     embedded_code = match.group(1)
-            #     embedded_name = match.group(2).strip()
-
-            #     new_row["account_code"] = embedded_code
-            #     new_row["account_name"] = embedded_name
-
-        ########################################################
-        # Detect embedded account code
-        ########################################################
-
-        code = str(new_row.get("account_code", "")).strip()
-        name = str(new_row.get("account_name", "")).strip()
-
-        if code == "":
-
-            match = re.match(r"^(\d+)\s+(.+)$", name)
+            match = re.match(r"^(\d{3,})\s+(.+)$", name)
 
             if match:
 
                 new_row["account_code"] = match.group(1)
-                new_row["account_name"] = match.group(2)
+                new_row["account_name"] = match.group(2).strip()
 
-                rows.append(new_row)
+            rows.append(new_row)
 
         return pd.DataFrame(rows).reset_index(drop=True)
 
