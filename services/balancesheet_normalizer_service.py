@@ -121,17 +121,33 @@ class BalancesheetNormalizerService:
                 # OR incorrectly inherited from the previous row.
                 ########################################################
 
-            name = str(new_row.get("account_name", "")).strip()
+            # name = str(new_row.get("account_name", "")).strip()
 
-            match = re.match(r"^(\d{3,})\s+(.+)$", name)
+            # match = re.match(r"^(\d{3,})\s+(.+)$", name)
+
+            # if match:
+
+            #     embedded_code = match.group(1)
+            #     embedded_name = match.group(2).strip()
+
+            #     new_row["account_code"] = embedded_code
+            #     new_row["account_name"] = embedded_name
+
+        ########################################################
+        # Detect embedded account code
+        ########################################################
+
+        code = str(new_row.get("account_code", "")).strip()
+        name = str(new_row.get("account_name", "")).strip()
+
+        if code == "":
+
+            match = re.match(r"^(\d+)\s+(.+)$", name)
 
             if match:
 
-                embedded_code = match.group(1)
-                embedded_name = match.group(2).strip()
-
-                new_row["account_code"] = embedded_code
-                new_row["account_name"] = embedded_name
+                new_row["account_code"] = match.group(1)
+                new_row["account_name"] = match.group(2)
 
                 rows.append(new_row)
 
