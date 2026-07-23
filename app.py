@@ -5,7 +5,7 @@ from routes.upload import router as upload_router
 app = FastAPI(title="AI PDF to CSV")
 origins = [
     "http://localhost:5173",  # Typical Vite frontend port
-    "http://localhost:3001",  # Typical React frontend port
+    "http://localhost:3000",  # Typical React frontend port
 ]
 
 app.add_middleware(

@@ -43,3 +43,5 @@ class Document:
     # CSV
     csv_path: str = ""
     excel_path: str = ""
+    response: dict = field(default_factory=dict)
+    response_path: str = ""

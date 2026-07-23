@@ -14,7 +14,21 @@ class BalancesheetNormalizerService:
         """
 
         dataframe = dataframe.copy()
+
         dataframe = cls._expand_multiline_rows(dataframe)
+        print("\n" + "=" * 70)
+        print("AFTER MULTILINE EXPANSION")
+        print("=" * 70)
+
+        if {"account_code", "account_name", "amount"}.issubset(dataframe.columns):
+            print(
+                dataframe[["account_code", "account_name", "amount"]].to_string(
+                    index=False
+                )
+            )
+
+        print("=" * 70)
+
         dataframe = cls._normalize_empty_values(dataframe)
         dataframe = cls._trim_strings(dataframe)
         dataframe = cls._normalize_row_type(dataframe)
@@ -29,125 +43,153 @@ class BalancesheetNormalizerService:
 
         return dataframe.reset_index(drop=True)
 
+    @staticmethod
+    def _expand_multiline_rows(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Expand rows containing multiple logical records.
 
-@staticmethod
-def _expand_multiline_rows(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Split rows that contain multiple logical records separated by <br>.
+        Supports
 
-    Handles examples like:
+        - <br>
+        - <br/>
+        - <BR>
+        - newline
 
-    account_code:
-        1500<br>1600
+        Handles examples like
 
-    account_name:
-        Cash<br>Bank
+        account_code:
+            1500
 
-    amount:
-        100<br>200
+        account_name:
+            Net Furniture...
+            1600 Net Field Equipment
 
-    OR
+        amount:
+            178309
+            205741
 
-    account_code:
-        1500
+        OR
 
-    account_name:
-        Net Furniture...<br>1600 Net Field Equipment
+        account_code:
+            1500
+            1600
 
-    amount:
-        178309<br>205741
+        account_name:
+            Furniture
+            Field Equipment
 
-    Also supports OCR outputs that contain:
-        <br>
-        <br/>
-        <BR>
-        newline characters
+        amount:
+            178309
+            205741
 
-    without changing the meaning of the data.
-    """
+        The algorithm first repairs embedded account codes,
+        then aligns every column.
+        """
 
-    rows = []
+        expanded_rows = []
 
-    for _, row in df.iterrows():
+        splitter = re.compile(r"<br\s*/?>|\n", flags=re.IGNORECASE)
 
-        row = row.copy()
+        for _, row in df.iterrows():
 
-        ############################################################
-        # Split every column
-        ############################################################
+            row = row.copy()
 
-        split_columns = {}
-        max_parts = 1
+            ###########################################################
+            # Split every column
+            ###########################################################
 
-        for column in df.columns:
-
-            value = str(row[column]).strip()
-
-            parts = [
-                part.strip()
-                for part in re.split(r"<br\s*/?>|\n", value, flags=re.IGNORECASE)
-                if part.strip()
-            ]
-
-            if not parts:
-                parts = [""]
-
-            split_columns[column] = parts
-            max_parts = max(max_parts, len(parts))
-
-        ############################################################
-        # Normal row
-        ############################################################
-
-        if max_parts == 1:
-            rows.append(row)
-            continue
-
-        ############################################################
-        # Expand into multiple logical rows
-        ############################################################
-
-        for index in range(max_parts):
-
-            new_row = row.copy()
+            split_columns = {}
 
             for column in df.columns:
 
-                parts = split_columns[column]
+                value = str(row[column]).strip()
 
-                if len(parts) == max_parts:
-                    value = parts[index]
+                parts = [part.strip() for part in splitter.split(value) if part.strip()]
 
-                elif len(parts) == 1:
-                    value = parts[0]
+                if not parts:
+                    parts = [""]
 
-                else:
-                    value = ""
+                split_columns[column] = parts
 
-                new_row[column] = value
+            ###########################################################
+            # Repair embedded account codes BEFORE alignment
+            ###########################################################
 
-            ########################################################
-            # Detect embedded account code
-            #
-            # Example:
-            #
-            # 1600 Net Field Equipment
-            #
-            # Override inherited account code if present.
-            ########################################################
+            if "account_name" in split_columns:
 
-            name = str(new_row.get("account_name", "")).strip()
+                names = split_columns["account_name"]
 
-            match = re.match(r"^(\d{3,})\s+(.+)$", name)
+                codes = split_columns.get("account_code", [""])
 
-            if match:
+                repaired_codes = []
+                repaired_names = []
 
-                new_row["account_code"] = match.group(1)
-                new_row["account_name"] = match.group(2).strip()
+                for index, name in enumerate(names):
 
-            rows.append(new_row)
+                    match = re.match(r"^(\d{3,})\s+(.+)$", name)
 
-        return pd.DataFrame(rows).reset_index(drop=True)
+                    if match:
+
+                        repaired_codes.append(match.group(1))
+                        repaired_names.append(match.group(2).strip())
+
+                    else:
+
+                        if index < len(codes):
+                            repaired_codes.append(codes[index])
+                        elif len(codes) == 1:
+                            repaired_codes.append(codes[0])
+                        else:
+                            repaired_codes.append("")
+
+                        repaired_names.append(name)
+
+                split_columns["account_code"] = repaired_codes
+                split_columns["account_name"] = repaired_names
+
+            ###########################################################
+            # Determine final number of logical rows
+            ###########################################################
+
+            max_parts = max(len(parts) for parts in split_columns.values())
+
+            ###########################################################
+            # Expand
+            ###########################################################
+
+            for i in range(max_parts):
+
+                new_row = {}
+
+                for column in df.columns:
+
+                    parts = split_columns[column]
+
+                    if len(parts) == max_parts:
+
+                        value = parts[i]
+
+                    elif len(parts) == 1:
+
+                        value = parts[0]
+
+                    elif i < len(parts):
+
+                        value = parts[i]
+
+                    else:
+
+                        value = ""
+
+                    new_row[column] = value
+                print(
+                    f"{new_row.get('account_code')} | "
+                    f"{new_row.get('account_name')} | "
+                    f"{new_row.get('amount')}"
+                )
+                expanded_rows.append(new_row)
+
+        return pd.DataFrame(expanded_rows).reset_index(drop=True)
 
     # ==========================================================
     # EMPTY VALUES

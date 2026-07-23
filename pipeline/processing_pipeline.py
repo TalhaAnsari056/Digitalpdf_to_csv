@@ -83,6 +83,7 @@ from agents.balancesheet_validator_agent import BalanceSheetValidatorAgent
 from agents.csv_export_agent import CSVExportAgent
 from agents.csv_export_agent import CSVExportAgent
 from agents.excel_formatter_agent import ExcelFormatterAgent
+from agents.balance_sheet_response_agent import BalanceSheetResponseAgent
 
 
 class ProcessingPipeline:
@@ -164,6 +165,8 @@ class ProcessingPipeline:
         print("\n[9/9] Excel Formatter\n")
 
         document = ExcelFormatterAgent.run(document)
+        print("\n[10/10] Building API Response\n")
+        document = BalanceSheetResponseAgent.run(document)
         print("PIPELINE COMPLETED")
         print("=" * 80)
 

@@ -16,8 +16,11 @@ async def upload_pdf(file: UploadFile = File(...)):
     saved_path = UploadAgent.save_pdf(file)
     document = ProcessingPipeline.run(saved_path)
 
-    return {
-        "message": "Processing Completed.",
-        # "pages": len(document.pages),
-        "document_type": document.document_type,
-    }
+    return document.response
+
+    # return {
+    #     "message": "Processing Completed.",
+    #     # "pages": len(document.pages),
+    #     "document_type": document.document_type,
+    #     "response": document.response,
+    # }
