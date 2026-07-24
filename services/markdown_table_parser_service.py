@@ -5,13 +5,32 @@ import pandas as pd
 
 class MarkdownTableParserService:
 
-    REQUIRED_COLUMNS = [
+    # REQUIRED_COLUMNS = [
+    #     "row_type",
+    #     "section",
+    #     "subsection",
+    #     "account_code",
+    #     "account_name",
+    #     "amount",
+    #     "currency",
+    # ]
+    BALANCE_SHEET_COLUMNS = [
         "row_type",
         "section",
         "subsection",
         "account_code",
         "account_name",
         "amount",
+        "currency",
+    ]
+
+    BANK_STATEMENT_COLUMNS = [
+        "row_type",
+        "date",
+        "description",
+        "debit",
+        "credit",
+        "balance",
         "currency",
     ]
 
@@ -29,7 +48,7 @@ class MarkdownTableParserService:
         return text == ""
 
     @classmethod
-    def parse(cls, markdown: str) -> pd.DataFrame:
+    def parse(cls, markdown: str, document_type: str) -> pd.DataFrame:
 
         if markdown is None:
             raise ValueError("Markdown is None.")
@@ -76,9 +95,27 @@ class MarkdownTableParserService:
         ##############################################################
         print("\nDetected Headers")
         print(headers)
+        # missing = []
+
+        # for column in cls.REQUIRED_COLUMNS:
+
+        #     if column not in headers:
+        #         missing.append(column)
+        if document_type == "balance_sheet":
+
+            required_columns = cls.BALANCE_SHEET_COLUMNS
+
+        elif document_type == "bank_statement":
+
+            required_columns = cls.BANK_STATEMENT_COLUMNS
+
+        else:
+
+            raise ValueError(f"Unsupported document type: {document_type}")
+
         missing = []
 
-        for column in cls.REQUIRED_COLUMNS:
+        for column in required_columns:
 
             if column not in headers:
                 missing.append(column)

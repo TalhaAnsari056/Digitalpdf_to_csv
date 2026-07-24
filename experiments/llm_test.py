@@ -10,15 +10,11 @@ from services.llm_service import LLMService
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
-DOCUMENT_TYPE = "balance_sheet"
-# DOCUMENT_TYPE = "bank_statement"
+# DOCUMENT_TYPE = "balance_sheet"
+DOCUMENT_TYPE = "bank_statement"
 
 MARKDOWN_FILE = (
-    PROJECT_ROOT
-    / "output"
-    / "Balance-Sheet-Example_digitalPDF_6--"
-    / "cleaned"
-    / "cleaned_markdown.md"
+    PROJECT_ROOT / "output" / "bankStatement_ubl" / "cleaned" / "cleaned_markdown.md"
 )
 
 PDF_NAME = MARKDOWN_FILE.parents[1].name

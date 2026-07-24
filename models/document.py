@@ -31,6 +31,9 @@ class Document:
     dataframe: object | None = None
     dataframe_path: str = ""
 
+    normalized_dataframe: object | None = None
+    normalized_dataframe_path: str = ""
+
     structured_data: dict = field(default_factory=dict)
     structured_data_path: str = ""
 

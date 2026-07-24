@@ -415,9 +415,11 @@ DOCUMENT
     def build_bank_statement_prompt(markdown: str):
 
         return f"""
-You are an expert bank statement normalization engine.
+You are an expert financial document normalization engine.
 
-Convert the document into ONE standardized markdown table.
+The input is a CLEAN MARKDOWN extracted from a DIGITAL BANK STATEMENT.
+
+Your task is to convert it into ONE standardized markdown table.
 
 Return ONLY the markdown table.
 
@@ -427,11 +429,17 @@ Do NOT explain anything.
 
 Do NOT use code fences.
 
+------------------------------------------------------------
+OUTPUT SCHEMA
+------------------------------------------------------------
+
 Use EXACTLY these columns.
 
-| row_type | date | description | reference | debit | credit | balance | currency |
+| row_type | date | description | debit | credit | balance | currency |
 
-Row types may include
+------------------------------------------------------------
+VALID ROW TYPES
+------------------------------------------------------------
 
 OPENING_BALANCE
 
@@ -441,22 +449,192 @@ CLOSING_BALANCE
 
 SUMMARY
 
-Rules
+------------------------------------------------------------
+GENERAL RULES
+------------------------------------------------------------
 
-- Preserve transaction order.
-- Preserve every transaction.
-- Never invent transactions.
-- Never merge transactions.
-- Never split transactions.
-- Every markdown row represents exactly ONE logical record.
-- Preserve dates exactly.
-- Preserve numeric values exactly.
-- Preserve negative values.
-- Preserve decimals.
-- Preserve currency.
-- Leave unavailable fields empty.
+Every markdown row represents EXACTLY ONE logical record.
 
+Preserve the original transaction order.
+
+Never reorder transactions.
+
+Never merge two transactions.
+
+Never split one transaction into multiple transactions.
+
+Never duplicate any transaction.
+
+Never invent any transaction.
+
+Never invent any amount.
+
+Never invent any balance.
+
+Never invent any date.
+
+Never invent any currency.
+
+Leave unavailable fields empty.
+
+------------------------------------------------------------
+DESCRIPTION RULES
+------------------------------------------------------------
+
+Many bank statements wrap long descriptions across multiple physical lines.
+
+Those wrapped lines belong to ONE transaction.
+
+Join wrapped lines into ONE description separated by spaces.
+
+Do NOT keep line breaks.
+
+Do NOT insert <br>.
+
+Do NOT repeat words.
+
+Do NOT move description text to another transaction.
+
+Every description must belong only to its own transaction.
+
+------------------------------------------------------------
+DATE RULES
+------------------------------------------------------------
+
+Some dates are split across lines.
+
+Example
+
+04-Aug
+2023
+
+Output
+
+2023-08-04
+
+If the full year is available elsewhere in that same logical row,
+combine it correctly.
+
+If a complete date cannot be determined,
+preserve exactly what exists.
+
+------------------------------------------------------------
+NUMERIC RULES
+------------------------------------------------------------
+
+Preserve numeric values exactly.
+
+Preserve decimals.
+
+Preserve negative values.
+
+Do not round.
+
+Do not recalculate balances.
+
+Do not modify amounts.
+
+------------------------------------------------------------
+OPENING / CLOSING BALANCE RULES
+------------------------------------------------------------
+
+Only output an OPENING_BALANCE row if it actually exists.
+
+Only output a CLOSING_BALANCE row if it explicitly exists in the document.
+
+Never invent either one.
+
+------------------------------------------------------------
+SUMMARY RULES
+------------------------------------------------------------
+
+Only output SUMMARY rows if the document explicitly contains summary information.
+
+Otherwise do not create SUMMARY rows.
+
+------------------------------------------------------------
+CURRENCY RULES
+------------------------------------------------------------
+
+If currency is explicitly available for a transaction or document,
+copy it.
+
+Otherwise leave the currency column empty.
+
+Never guess the currency.
+
+------------------------------------------------------------
+MISSING VALUES
+------------------------------------------------------------
+
+If Debit is missing,
+leave Debit empty.
+
+If Credit is missing,
+leave Credit empty.
+
+If Balance is missing,
+leave Balance empty.
+
+Never replace missing values with 0.
+
+------------------------------------------------------------
+IMPORTANT
+------------------------------------------------------------
+
+The output must contain ONLY the markdown table.
+
+Nothing before it.
+
+Nothing after it.
+
+------------------------------------------------------------
 DOCUMENT
-
+------------------------------------------------------------
+   
 {markdown}
 """
+
+
+# You are an expert bank statement normalization engine.
+
+# Convert the document into ONE standardized markdown table.
+
+# Return ONLY the markdown table.
+
+# Do NOT return JSON.
+
+# Do NOT explain anything.
+
+# Do NOT use code fences.
+
+# Use EXACTLY these columns.
+
+# | row_type | date | description | debit | credit | balance | currency |
+
+# Row types may include
+
+# OPENING_BALANCE
+
+# TRANSACTION
+
+# CLOSING_BALANCE
+
+# SUMMARY
+
+# Rules
+
+# - Preserve transaction order.
+# - Preserve every transaction.
+# - Never invent transactions.
+# - Never merge transactions.
+# - Never split transactions.
+# - Every markdown row represents exactly ONE logical record.
+# - Preserve dates exactly.
+# - Preserve numeric values exactly.
+# - Preserve negative values.
+# - Preserve decimals.
+# - Preserve currency.
+# - Leave unavailable fields empty.
+
+# DOCUMENT
