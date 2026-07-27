@@ -20,7 +20,8 @@ class BankStatementValidatorAgent:
         # Validate
         ####################################################
 
-        report = BankStatementValidatorService.validate(document.normalized_dataframe)
+        report = BankStatementValidatorService.validate(document.dataframe)
+        document.validation_report = report
 
         ####################################################
         # Output Folder

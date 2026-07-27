@@ -39,7 +39,7 @@ class BankStatementExcelFormatterAgent:
 
         BankStatementExcelFormatterService.export(
             dataframe=document.dataframe,
-            output_path=excel_file,
+            output_file=excel_file,
         )
 
         ###########################################################

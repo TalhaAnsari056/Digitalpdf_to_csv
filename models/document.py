@@ -34,8 +34,8 @@ class Document:
     normalized_dataframe: object | None = None
     normalized_dataframe_path: str = ""
 
-    structured_data: dict = field(default_factory=dict)
-    structured_data_path: str = ""
+    # structured_data: dict = field(default_factory=dict)
+    # structured_data_path: str = ""
 
     # LLM output
     # mapped_json: dict = field(default_factory=dict)
@@ -43,6 +43,7 @@ class Document:
     # Validation output
     validation_report: dict = field(default_factory=dict)
     validation_report_path: str = ""
+
     # CSV
     csv_path: str = ""
     excel_path: str = ""
