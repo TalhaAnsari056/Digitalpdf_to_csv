@@ -5,15 +5,6 @@ import pandas as pd
 
 class MarkdownTableParserService:
 
-    # REQUIRED_COLUMNS = [
-    #     "row_type",
-    #     "section",
-    #     "subsection",
-    #     "account_code",
-    #     "account_name",
-    #     "amount",
-    #     "currency",
-    # ]
     BALANCE_SHEET_COLUMNS = [
         "row_type",
         "section",
