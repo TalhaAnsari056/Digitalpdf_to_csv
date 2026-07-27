@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes.upload import router as upload_router
+from routes.download import router as download_router
 
 app = FastAPI(title="AI PDF to CSV")
 origins = [
@@ -16,3 +17,4 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers (like Content-Type)
 )
 app.include_router(upload_router)
+app.include_router(download_router)

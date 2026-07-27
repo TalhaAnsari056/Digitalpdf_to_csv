@@ -208,7 +208,11 @@ class BalanceSheetResponseBuilder:
     @staticmethod
     def _build_downloads(document):
 
+        document_name = Path(document.filename).stem
+
         return {
-            "csv": document.csv_path,
-            "excel": document.excel_path,
+            "csv": f"/download/{document_name}/csv",
+            "excel": f"/download/{document_name}/excel",
+            # "csv": document.csv_path,
+            # "excel": document.excel_path,
         }
