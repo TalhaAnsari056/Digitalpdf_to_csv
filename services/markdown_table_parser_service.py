@@ -6,13 +6,13 @@ import pandas as pd
 class MarkdownTableParserService:
 
     BALANCE_SHEET_COLUMNS = [
-        "row_type",
-        "section",
-        "subsection",
-        "account_code",
+        # "row_type",
+        # "section",
+        # "subsection",
+        # "account_code",
         "account_name",
         "amount",
-        "currency",
+        # "currency",
     ]
 
     BANK_STATEMENT_COLUMNS = [

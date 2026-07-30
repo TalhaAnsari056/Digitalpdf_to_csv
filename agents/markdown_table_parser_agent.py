@@ -18,8 +18,27 @@ class MarkdownTableParserAgent:
         # Parse markdown into DataFrame
         ###########################################################
 
+        # dataframe = MarkdownTableParserService.parse(
+        #     document.mapped_markdown,
+        #     document.document_type,
+        # )
+
+        ############################################################
+        # Use validated markdown if available
+        ############################################################
+
+        markdown = (
+            document.validated_markdown
+            if document.validated_markdown
+            else document.mapped_markdown
+        )
+
+        ############################################################
+        # Parse markdown
+        ############################################################
+
         dataframe = MarkdownTableParserService.parse(
-            document.mapped_markdown,
+            markdown,
             document.document_type,
         )
 

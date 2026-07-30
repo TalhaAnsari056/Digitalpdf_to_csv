@@ -163,241 +163,49 @@ class PromptBuilderService:
     def build_balance_sheet_prompt(markdown: str):
 
         return f"""
-You are an expert financial statement normalization engine.
-
-Your ONLY task is to normalize the financial statement into ONE standardized markdown table for automated parsing.
-
-You are NOT summarizing.
-
-You are NOT interpreting.
-
-You are NOT calculating.
-
-You are NOT improving formatting.
-
-You are ONLY extracting structured data.
-
-==================================================
-OUTPUT
-==================================================
-
-Return EXACTLY ONE markdown table.
-
-Do NOT return JSON.
-
-Do NOT explain anything.
-
-Do NOT use markdown code fences.
-
-Do NOT output any text before or after the table.
-
-==================================================
-OUTPUT SCHEMA
-==================================================
-
-Use EXACTLY these columns.
-
-| row_type | section | subsection | account_code | account_name | amount | currency |
-
-Do NOT add or remove columns.
-
-==================================================
-ROW TYPES
-==================================================
-
-Every row MUST be exactly ONE of these types.
-
-SECTION
-SUBSECTION
-ACCOUNT
-TOTAL
-
-==================================================
-SECTION
-==================================================
-
-Represents the highest financial category.
-
-Examples
-
-Assets
-Liabilities
-Equity
-
-Rules
-
-- section contains the section name.
-- subsection is empty.
-- account_code is empty.
-- account_name is empty.
-- amount is empty.
-- currency is empty.
-
-Exactly ONE SECTION row should be emitted when a new top-level section begins.
-
-==================================================
-SUBSECTION
-==================================================
-
-Represents a grouping inside a section.
-
-Examples
-
-Current Assets
-Non-Current Assets
-Current Liabilities
-Non-Current Liabilities
-
-Rules
-
-- section contains the parent section.
-- subsection contains the subsection name.
-- account_code is empty.
-- account_name is empty.
-- amount is empty.
-- currency is empty.
-
-Create exactly ONE SUBSECTION row.
-
-The subsection row must NEVER contain the first account.
-
-The first account after a subsection MUST become its own ACCOUNT row.
-
-==================================================
-ACCOUNT
-==================================================
-
-Represents a real financial account.
-
-Examples
-
-Cash
-Checking
-Inventory
-Accounts Receivable
-Equipment
-Retained Earnings
-
-Rules
-
-- Repeat the current section.
-- Repeat the current subsection if one exists.
-- account_name contains ONLY the account name.
-- account_code contains ONLY the account code if present.
-- amount contains ONLY the account amount.
-- currency contains the currency if shown.
-
-Never place subsection names inside account_name.
-
-Never merge an account into a subsection row.
-
-Never combine multiple accounts into one row.
-
-Every ACCOUNT row represents exactly ONE account.
-
-==================================================
-TOTAL
-==================================================
-
-Represents subtotal or total rows.
-
-Examples
-
-Total Current Assets
-Total Assets
-Total Liabilities
-Total Equity
-Total Liabilities and Equity
-
-Rules
-
-- Repeat the current section.
-- Repeat the current subsection if applicable.
-- account_code is empty.
-- account_name contains the total label exactly as written.
-- amount contains the reported value.
-
-Never calculate totals.
-
-Never invent totals.
-
-==================================================
-GENERAL EXTRACTION RULES
-==================================================
-
-Extract EVERY financial row.
-
-Never skip rows.
-
-Never omit rows.
-
-Never invent rows.
-
-Preserve the original document order.
-
-Preserve every numeric value exactly.
-
-Preserve negative values.
-
-Preserve decimal values.
-
-Preserve currency symbols.
-
-If account codes do not exist, leave account_code empty.
-
-If amount does not exist, leave amount empty.
-
-If currency does not exist, leave currency empty.
-
-If multiple reporting years exist, extract ONLY the latest year.
-
-If one OCR line contains multiple accounts, split them into separate ACCOUNT rows.
-
-Never place multiple account names into one row.
-
-Never place multiple account codes into one row.
-
-Never use HTML tags.
-
-Never use <br>.
-
-==================================================
-HIERARCHY
-==================================================
-
-Think of the document as a hierarchy.
-
-SECTION
-    ↓
-SUBSECTION (optional)
-    ↓
-ACCOUNT
-    ↓
-TOTAL
-
-Each row belongs to exactly ONE level.
-
-Do NOT merge two levels into one row.
-
-==================================================
-EXAMPLE
-==================================================
-
-| row_type | section | subsection | account_code | account_name | amount | currency |
-|----------|---------|------------|--------------|--------------|--------|----------|
-| SECTION | Assets | | | | | |
-| SUBSECTION | Assets | Current Assets | | | | |
-| ACCOUNT | Assets | Current Assets | 1000 | Cash | 898402 | |
-| ACCOUNT | Assets | Current Assets | 1010 | Checking | 583961 | |
-| ACCOUNT | Assets | Current Assets | 1020 | Savings | 224600 | |
-| ACCOUNT | Assets | Current Assets | 1030 | Petty Cash | 89840 | |
-| ACCOUNT | Assets | Current Assets | 1100 | Accounts Receivable | 3593607 | |
-| TOTAL | Assets | Current Assets | | Total Current Assets | 5356121 | |
-| SUBSECTION | Assets | Non-Current Assets | | | | |
-| ACCOUNT | Assets | Non-Current Assets | 1400 | Net Computer Equipment | 185167 | |
-| ACCOUNT | Assets | Non-Current Assets | 1500 | Net Furniture, Fixtures, & Equipment | 178309 | |
-| TOTAL | Assets | Non-Current Assets | | Total Non-Current Assets | 1501908 | |
-| TOTAL | Assets | | | Total Assets | 6858029 | |
+You are a financial data extraction engine.
+
+Extract EVERY financial line item from the balance sheet into a simple two-column format.
+
+Return EXACTLY this markdown table structure:
+
+| account_name | amount |
+|-------------|--------|
+| [name] | [value] |
+
+RULES:
+1. Extract EVERY single line - do not skip any rows
+2. Include ALL of these types of rows:
+   - Account codes with names (e.g., "1000 Cash", "1100 Accounts Receivable")
+   - Subtotal lines (e.g., "Total Cash", "Total Current Assets")
+   - Section headers (e.g., "Current Assets", "Non-Current Assets")
+   - Main categories (e.g., "Assets", "Liabilities", "Equity")
+3. Preserve the exact hierarchy and order from the original document
+4. Keep account codes as part of the account_name if present
+5. For rows with multiple accounts (like "1500 Net Furniture, Fixtures, & Equipment 1600 Net Field Equipment"), split them into separate rows
+6. Preserve all amounts exactly as shown - including commas, parentheses for negatives, and decimals
+7. Leave amount blank if no value is present
+8. Do not calculate or modify any values
+9. Do not skip empty rows that represent structural elements
+10. Output ONLY the markdown table - no explanations, no code fences
+
+EXAMPLE OUTPUT:
+| account_name | amount |
+|-------------|--------|
+| Assets | |
+| Current Assets | |
+| 1000 Cash | |
+| 1010 Checking | 583,961 |
+| 1020 Savings | 224,600 |
+| 1030 Petty Cash | 89,840 |
+| Total Cash | 898,402 |
+| 1100 Accounts Receivable | 3,593,607 |
+| 1200 Work in Process | 589,791 |
+| 1300 Other Current Assets | |
+| 1310 Prepaid Rent | 164,593 |
+| 1320 Prepaid Liability Insurance | 109,728 |
+| Total Other Current Assets | 274,321 |
+| Total Current Assets | 5,356,121 |
 
 ==================================================
 DOCUMENT

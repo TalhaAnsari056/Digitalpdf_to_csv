@@ -2,6 +2,7 @@ from agents.extraction_agent import ExtractionAgent
 from agents.cleaning_agent import CleaningAgent
 from agents.classification_agent import ClassificationAgent
 from agents.llm_extraction_agent import LLMExtractionAgent
+from agents.llm_validation_agent import LLMValidationAgent
 from agents.markdown_table_parser_agent import MarkdownTableParserAgent
 
 from agents.balancesheet_normalizer_agent import BalanceSheetNormalizerAgent
@@ -62,6 +63,15 @@ class ProcessingPipeline:
         print("\n[4/5] LLM Mapping\n")
 
         document = LLMExtractionAgent.run(document)
+
+        ############################################################
+        # STEP 5 - LLM Validation & Self Repair
+        ############################################################
+
+        print("\n[5/10] LLM Validation\n")
+
+        document = LLMValidationAgent.run(document)
+
         ############################################################
         # STEP 5
         print("\n[5/10] Markdown Table Parsing\n")

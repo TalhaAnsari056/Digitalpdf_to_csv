@@ -28,6 +28,9 @@ class Document:
     mapped_markdown: str = ""
     mapped_markdown_path: str = ""
 
+    validated_markdown: str = ""
+    validated_markdown_path: str = ""
+
     dataframe: object | None = None
     dataframe_path: str = ""
 
