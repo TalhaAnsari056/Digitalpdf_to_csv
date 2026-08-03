@@ -11,6 +11,10 @@ from agents.bank_statement_normalizer_agent import BankStatementNormalizerAgent
 from agents.balancesheet_validator_agent import BalanceSheetValidatorAgent
 from agents.bank_statement_validator_agent import BankStatementValidatorAgent
 
+from agents.metadata_extraction_agent import MetadataExtractionAgent
+from agents.hierarchy_extraction_agent import HierarchyExtractionAgent
+from agents.financial_summary_agent import FinancialSummaryAgent
+from agents.financial_analytics_agent import FinancialAnalyticsAgent
 from agents.csv_export_agent import CSVExportAgent
 
 from agents.excel_formatter_agent import ExcelFormatterAgent
@@ -73,7 +77,40 @@ class ProcessingPipeline:
         document = LLMValidationAgent.run(document)
 
         ############################################################
-        # STEP 5
+        # STEP 6
+        ############################################################
+
+        print("\n[6/12] Metadata Extraction\n")
+
+        document = MetadataExtractionAgent.run(document)
+
+        ############################################################
+        # STEP 7
+        ############################################################
+
+        print("\n[7/12] Hierarchy Extraction\n")
+
+        document = HierarchyExtractionAgent.run(document)
+
+        ########################################################
+        # STEP 10
+        ########################################################
+
+        print("\n[10/12] Financial Summary\n")
+
+        document = FinancialSummaryAgent.run(document)
+
+        ########################################################
+        # STEP 11
+        ########################################################
+
+        print("\n[11/14] Financial Analytics\n")
+
+        document = FinancialAnalyticsAgent.run(document)
+
+        ############################################################
+        # STEP 8
+        ############################################################
         print("\n[5/10] Markdown Table Parsing\n")
         document = MarkdownTableParserAgent.run(document)
 
@@ -111,17 +148,17 @@ class ProcessingPipeline:
             # STEP 9
             ########################################################
 
-            print("\n[9/10] Excel Formatter\n")
+            # print("\n[9/10] Excel Formatter\n")
 
-            document = ExcelFormatterAgent.run(document)
+            # document = ExcelFormatterAgent.run(document)
 
             ########################################################
             # STEP 10
             ########################################################
 
-            print("\n[10/10] Building API Response\n")
+            # print("\n[10/10] Building API Response\n")
 
-            document = BalanceSheetResponseAgent.run(document)
+            # document = BalanceSheetResponseAgent.run(document)
 
         ############################################################
         # BANK STATEMENT PIPELINE
@@ -157,17 +194,17 @@ class ProcessingPipeline:
             # STEP 9
             ########################################################
 
-            print("\n[9/10] Excel Formatter\n")
+            # print("\n[9/10] Excel Formatter\n")
 
-            document = BankStatementExcelFormatterAgent.run(document)
+            # document = BankStatementExcelFormatterAgent.run(document)
 
             ########################################################
             # STEP 10
             ########################################################
 
-            print("\n[10/10] Building API Response\n")
+            # print("\n[10/10] Building API Response\n")
 
-            document = BankStatementResponseAgent.run(document)
+            # document = BankStatementResponseAgent.run(document)
 
         ############################################################
         # Unsupported
