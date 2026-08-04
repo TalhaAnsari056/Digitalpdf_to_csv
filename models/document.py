@@ -88,6 +88,12 @@ class Document:
     memory_store_report: dict = field(default_factory=dict)
     memory_store_report_path: str = ""
 
+    company_memory: dict = field(default_factory=dict)
+    company_memory_path: str = ""
+
+    company_memory_report: dict = field(default_factory=dict)
+    company_memory_report_path: str = ""
+
     document_id: str = ""
     memory_index: int = 0
 

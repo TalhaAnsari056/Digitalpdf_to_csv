@@ -17,6 +17,7 @@ from agents.financial_summary_agent import FinancialSummaryAgent
 from agents.financial_analytics_agent import FinancialAnalyticsAgent
 from agents.memory_agent import MemoryAgent
 from agents.memory_storage_agent import MemoryStorageAgent
+from agents.company_memory_builder_agent import CompanyMemoryBuilderAgent
 from agents.csv_export_agent import CSVExportAgent
 
 from agents.excel_formatter_agent import ExcelFormatterAgent
@@ -125,6 +126,14 @@ class ProcessingPipeline:
         print("\nMemory Storage\n")
 
         document = MemoryStorageAgent.run(document)
+
+        ########################################################
+        # STEP - Company Memory
+        ########################################################
+
+        print("\nCompany Memory\n")
+
+        document = CompanyMemoryBuilderAgent.run(document)
 
         ############################################################
         # STEP 8
