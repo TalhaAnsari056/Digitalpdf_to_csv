@@ -15,6 +15,8 @@ from agents.metadata_extraction_agent import MetadataExtractionAgent
 from agents.hierarchy_extraction_agent import HierarchyExtractionAgent
 from agents.financial_summary_agent import FinancialSummaryAgent
 from agents.financial_analytics_agent import FinancialAnalyticsAgent
+from agents.memory_agent import MemoryAgent
+from agents.memory_storage_agent import MemoryStorageAgent
 from agents.csv_export_agent import CSVExportAgent
 
 from agents.excel_formatter_agent import ExcelFormatterAgent
@@ -107,6 +109,22 @@ class ProcessingPipeline:
         print("\n[11/14] Financial Analytics\n")
 
         document = FinancialAnalyticsAgent.run(document)
+
+        ########################################################
+        # STEP - Memory
+        ########################################################
+
+        print("\nMemory Generation\n")
+
+        document = MemoryAgent.run(document)
+
+        ########################################################
+        # STEP - Memory Storage
+        ########################################################
+
+        print("\nMemory Storage\n")
+
+        document = MemoryStorageAgent.run(document)
 
         ############################################################
         # STEP 8

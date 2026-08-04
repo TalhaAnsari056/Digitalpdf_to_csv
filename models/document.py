@@ -70,6 +70,27 @@ class Document:
     financial_analytics_report: dict = field(default_factory=dict)
     financial_analytics_report_path: str = ""
 
+    memory_prompt: str = ""
+    memory_prompt_path: str = ""
+
+    raw_memory_response: str = ""
+    raw_memory_response_path: str = ""
+
+    memory: dict = field(default_factory=dict)
+    memory_path: str = ""
+
+    memory_report: dict = field(default_factory=dict)
+    memory_report_path: str = ""
+
+    memory_store_path: str = ""
+    memory_store_entry: dict = field(default_factory=dict)
+
+    memory_store_report: dict = field(default_factory=dict)
+    memory_store_report_path: str = ""
+
+    document_id: str = ""
+    memory_index: int = 0
+
     dataframe: object | None = None
     dataframe_path: str = ""
 
